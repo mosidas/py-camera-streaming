@@ -3,13 +3,23 @@
 
 <head>
     <title>Video Streaming Demonstration</title>
+    <script src="https://cdn.jsdelivr.net/hls.js/latest/hls.min.js"></script>
 </head>
 
 <body>
     <h1>Video Streaming Demonstration</h1>
-    <img src="{{ url_for('streming') }}">
-
-    <video src="{{ url_for('hls_streming') }}" autoplay></video>
+    <video id="camera-caputure" autoplay loop muted></video>
+        <script>
+            if(Hls.isSupported()){
+                var media = document.getElementById('camera-caputure');
+                var hls = new Hls();
+                hls.loadSource('hls_stream');
+                hls.attachMedia(media);
+                hls.on(Hls.Events.MANIFEST_PARSED, function(){
+                    media.play();
+                });
+            }
+        </script>
 </body>
 
 </html>

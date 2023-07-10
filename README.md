@@ -11,6 +11,6 @@ venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 $env:FLASK_APP = "server.py"
-$env:FLASK_ENV = "development"
+$env:FLASK_DEBUG=1
 flask run
 ```
