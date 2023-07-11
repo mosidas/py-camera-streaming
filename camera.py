@@ -28,12 +28,12 @@ class VideoCamera(object):
         image = cv2.putText(
             img=image,
             # format: "Date: 2020-01-01 00:00:00"
-            text="Date:" + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            text="Date:" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             org=(5, 20),
             fontFace=cv2.FONT_HERSHEY_COMPLEX,
-            fontScale=0.5,
+            fontScale=0.8,
             color=(0, 255, 0),
-            thickness=2,
+            thickness=1,
             lineType=cv2.LINE_AA,
         )
 
