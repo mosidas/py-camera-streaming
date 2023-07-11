@@ -8,13 +8,14 @@
 
 <body>
     <h1>Video Streaming Demonstration</h1>
-    <!-- <img src="{{ url_for('streming') }}"> -->
-    <video id="camera-caputure" autoplay muted></video>
+    <video id="camera-caputure"  controls autoplay muted></video>
+
         <script>
             if(Hls.isSupported()){
                 var media = document.getElementById('camera-caputure');
                 var hls = new Hls();
-                hls.loadSource('hls_stream');
+                // hls.loadSource('hls_stream');
+                hls.loadSource("{{ url_for('static', filename='output.m3u8') }}");
                 hls.attachMedia(media);
                 hls.on(Hls.Events.MANIFEST_PARSED, function(){
                     media.play();

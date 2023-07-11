@@ -1,7 +1,6 @@
 import datetime
 import time
 import cv2
-import numpy as np
 
 
 def save_movie(duration=10):

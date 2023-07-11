@@ -1,132 +1,96 @@
 import datetime
-import subprocess
-import threading
-import time
 import cv2
 import numpy as np
-import re
-import logging
-import traceback
-
-tsl = []
-seq = 0
 
 
-def live():
-    threading.Thread(target=__live).start()
+class VideoCamera(object):
+    def __init__(self, url):
+        self.video = cv2.VideoCapture(url)
+
+    def __del__(self):
+        self.video.release()
+
+    def isOpened(self):
+        return self.video.isOpened()
+
+    def get_fps(self):
+        result = self.video.get(cv2.CAP_PROP_FPS)
+        if result > 60 or result < 1:
+            result = None
+        return result
+
+    def get_frame(self):
+        ok, image = self.video.read()
+        if image is None:
+            return None
+
+        # add date to the frame.
+        image = cv2.putText(
+            img=image,
+            # format: "Date: 2020-01-01 00:00:00"
+            text="Date:" + datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            org=(5, 20),
+            fontFace=cv2.FONT_HERSHEY_COMPLEX,
+            fontScale=0.5,
+            color=(0, 255, 0),
+            thickness=2,
+            lineType=cv2.LINE_AA,
+        )
+
+        ret, jpeg = cv2.imencode(".jpg", image)
+        return jpeg
 
 
-def __live():
-    global seq
+def streming():
+    """
+    This function is used to stream the video from the camera.
+    yield returns the frame jpg file of the video.
+    """
+    video = cv2.VideoCapture(0)
+    title = "Video"
     while True:
         try:
-            filename = create_mp4()
-            playlist = encode_ts(filename)
-            tsl.extend(playlist)
-            # time.sleep(float(tsl[0][0]))
-            # tsl.pop(0)
-            seq += 1
-        except:
-            logging.exception(traceback.format_exc())
-            pass
+            ok, frame = video.read()
+            if ok == True:
+                # Resize to fit display frame.
+                resized_frame = cv2.resize(frame, (500, 500))
 
+                # add date to the frame.
+                cv2.putText(
+                    img=resized_frame,
+                    # format: "Date: 2020-01-01 00:00:00"
+                    text="Date:"
+                    + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    org=(5, 20),
+                    fontFace=cv2.FONT_HERSHEY_SIMPLEX,
+                    fontScale=0.5,
+                    color=(0, 255, 0),
+                    thickness=2,
+                    lineType=cv2.LINE_AA,
+                )
 
-def create_mp4(duration=5):
-    camera = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-    # fps
-    fps = int(camera.get(cv2.CAP_PROP_FPS))
-    # width
-    w = int(camera.get(cv2.CAP_PROP_FRAME_WIDTH))
-    # height
-    h = int(camera.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    # fourcc
-    fourcc = cv2.VideoWriter_fourcc("m", "p", "4", "v")
-    # filename
-    filename = datetime.datetime.now().strftime("static/%Y%m%d_%H%M%S") + ".mp4"
-    # create the video.
-    video = cv2.VideoWriter(filename, fourcc, fps, (w, h))
+                # Convert jpg file.
+                ok, jpg = cv2.imencode(".jpg", resized_frame)
 
-    # start recording.
-    start_time = time.time()
-    while True:
-        ret, frame = camera.read()
-        if ret == False:
-            break
+                frame = jpg.tobytes()
 
-        # save the frame.
-        video.write(frame)
+                # Yield the frame in byte format.
+                yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+            else:
+                # return the white frame.
+                size = (500, 500)
+                black_img = np.zeros(size, np.uint8)
+                white_img = black_img + 255
+                frame = white_img.tobytes()
+                yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + frame + b"\r\n"
+                print("Camera is not available.")
 
-        # Stop recording after the duration.
-        if time.time() - start_time > duration:
-            break
+            cv2.waitKey(1)
 
-    # release the camera.
-    camera.release()
-    cv2.destroyAllWindows()
-
-    return filename
-
-
-def encode_ts(filename):
-    command = [
-        # TODO: Change the path.
-        "C:/apps/ffmpeg-master-latest-win64-gpl/bin/ffmpeg.exe",
-        "-i",
-        filename,
-        "-f",
-        "hls",
-        "-c:v",
-        "libx264",
-        "-acodec",
-        "libfaac",
-        "-hls_time",
-        "5",
-        "-hls_list_size",
-        "0",
-        "-start_number",
-        str(int(time.time() * 1000)),
-        "-hls_segment_filename",
-        "static/h_%d.ts",
-        "pipe:1",
-    ]
-    data = subprocess.run(
-        command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, shell=True
-    )
-
-    playlist = data.stdout.decode("utf-8")
-    playlist = playlist[playlist.rfind("#EXTM3U") :]
-    return re.findall(r"#EXTINF:([\d.]+),\s+(\S+)", playlist)
-
-
-def get_playlist():
-    global seq
-    pl = [
-        "#EXTM3U",
-        "#EXT-X-VERSION:3",
-        "#EXT-X-TARGETDURATION:6",
-        "#EXT-X-MEDIA-SEQUENCE:%d" % seq,
-    ]
-
-    for ts in tsl:
-        pl.append("#EXTINF:%s," % ts[0])
-        pl.append("#EXT-X-DISCONTINUITY")
-        pl.append("/static/%s" % ts[1])
-
-    return "\n".join(pl)
-
-
-if __name__ == "__main__":
-    while True:
-        try:
-            filename = create_mp4()
-            playlist = encode_ts(filename)
-            tsl.extend(playlist)
-            # time.sleep(float(tsl[0][0]))
-            # tsl.pop(0)
-            seq += 1
         except KeyboardInterrupt:
+            # Press '[ctrl] + [c]' on the console to exit the program.
             print("Close.")
             break
-        except:
-            logging.exception(traceback.format_exc())
-            pass
+
+    video.release()
+    cv2.destroyAllWindows()
