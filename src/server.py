@@ -1,7 +1,4 @@
-from flask import Flask, render_template, Response, send_file
-import flask
-import camera
-import hls
+from flask import Flask, render_template
 import logging
 
 app = Flask(__name__)
