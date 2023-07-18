@@ -50,4 +50,4 @@ cs-camera-capture.exe | ffmpeg -r 30 -i - -f hls -c:v libx264 -acodec libfaac -s
 python ../frame2stdout.py | ffmpeg -r 30 -i - -f hls -c:v libx264 -acodec libfaac -strftime 1 -strftime_mkdir 1 -hls_time 5 -sc_threshold 0 -g 30 -keyint_min 150 -hls_segment_filename %Y-%m-%d/v%H%M%S.ts -movflags faststart output.m3u8
 
 # v2(C#版)
-cs-camera-capture.exe | ffmpeg -r 30 -i - -f hls -c:v libx264 -acodec libfaac -strftime 1 -strftime_mkdir 1 -hls_time 5 -sc_threshold 0 -g 30 -keyint_min $(awk "BEGIN { print 30 * 5 }") -hls_segment_filename %Y-%m-%d/v%H%M%S.ts -movflags faststart output.m3u8
+cs-camera-capture.exe | ffmpeg -r 30 -i - -f hls -c:v libx264 -acodec libfaac -strftime 1 -strftime_mkdir 1 -hls_time 5 -sc_threshold 0 -g 30 -keyint_min 150 -hls_segment_filename %Y-%m-%d/v%H%M%S.ts -movflags faststart output.m3u8

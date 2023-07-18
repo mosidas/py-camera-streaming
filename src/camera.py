@@ -20,13 +20,13 @@ class VideoCamera(object):
         return result
 
     def get_frame(self):
-        ok, image = self.video.read()
-        if image is None:
+        ok, frame = self.video.read()
+        if frame is None:
             return None
 
         # add date to the frame.
-        image = cv2.putText(
-            img=image,
+        frame = cv2.putText(
+            img=frame,
             # format: "Date: 2020-01-01 00:00:00"
             text="Date:" + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             org=(5, 20),
@@ -37,8 +37,9 @@ class VideoCamera(object):
             lineType=cv2.LINE_AA,
         )
 
-        ret, jpeg = cv2.imencode(".jpg", image)
-        return jpeg
+        ok, jpeg = cv2.imencode(".jpg", frame)
+        return ok, jpeg
+        # return ok, frame
 
 
 def streming():
